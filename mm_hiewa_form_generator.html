@@ -1,0 +1,462 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MM HIEWA File Cover Generator</title>
+  <style>
+    :root {
+      --ink: #111;
+      --panel: #f5f6f8;
+      --line: #cbd3dd;
+      --accent: #126c92;
+      --danger: #9d2c30;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      font-family: Arial, Helvetica, sans-serif;
+      background: #e7ebf0;
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: minmax(280px, 350px) minmax(0, 1fr);
+      gap: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .controls {
+      align-self: start;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 12px 28px rgba(20, 30, 40, 0.08);
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: 20px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+
+    .hint {
+      margin: 0 0 16px;
+      color: #657181;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .field {
+      margin-bottom: 10px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    input,
+    select {
+      width: 100%;
+      min-height: 38px;
+      padding: 8px 9px;
+      border: 1px solid #b9c3cf;
+      border-radius: 6px;
+      color: var(--ink);
+      background: #fff;
+      font: 14px/1.25 Arial, Helvetica, sans-serif;
+      outline: none;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(18, 108, 146, 0.14);
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 9px;
+      margin-top: 14px;
+    }
+
+    button {
+      min-height: 40px;
+      border: 0;
+      border-radius: 6px;
+      padding: 8px 10px;
+      color: #fff;
+      background: var(--accent);
+      font: 700 13px/1 Arial, Helvetica, sans-serif;
+      cursor: pointer;
+    }
+
+    button:hover {
+      filter: brightness(0.92);
+    }
+
+    button.secondary {
+      color: #111;
+      background: #dfe5ec;
+    }
+
+    button.danger {
+      background: var(--danger);
+    }
+
+    .preview {
+      min-width: 0;
+      overflow: auto;
+      padding-bottom: 20px;
+    }
+
+    .sheet {
+      position: relative;
+      width: 794px;
+      height: 1123px;
+      margin: 0 auto;
+      background: #fff;
+      box-shadow: 0 18px 42px rgba(20, 30, 40, 0.18);
+      transform-origin: top center;
+    }
+
+    .cover-bg {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      width: 100%;
+      height: 100%;
+      object-fit: fill;
+      user-select: none;
+      pointer-events: none;
+    }
+
+    .cover-field {
+      position: absolute;
+      z-index: 2;
+      border: 0;
+      border-radius: 0;
+      padding: 1px 7px;
+      min-height: 0;
+      height: 21px;
+      color: #000;
+      background: rgba(255, 255, 255, 0.72);
+      font: 700 15px/19px Arial, Helvetica, sans-serif;
+      outline: none;
+    }
+
+    .cover-field:focus {
+      background: #eef8fc;
+      box-shadow: inset 0 0 0 2px rgba(18, 108, 146, 0.28);
+    }
+
+    .tick {
+      position: absolute;
+      z-index: 2;
+      width: 60px;
+      height: 18px;
+      border: 0;
+      background: transparent;
+      color: #000;
+      font: 900 18px/18px Arial, Helvetica, sans-serif;
+      text-align: center;
+      pointer-events: none;
+    }
+
+    #fromWhere { left: 188px; top: 180px; width: 302px; }
+    #date { left: 188px; top: 204px; width: 302px; }
+    #brokerName { left: 188px; top: 250px; width: 302px; }
+    #rcoNo { left: 188px; top: 273px; width: 302px; }
+    #customerName { left: 188px; top: 297px; width: 302px; }
+    #icNo { left: 188px; top: 320px; width: 302px; }
+    #modelVehicle { left: 188px; top: 343px; width: 302px; }
+    #colour { left: 188px; top: 367px; width: 302px; }
+    #accessories { left: 188px; top: 390px; width: 302px; }
+    #tradeIn { left: 188px; top: 413px; width: 302px; }
+
+    #choiceFirst { left: 682px; top: 86px; }
+    #choiceAdditional { left: 682px; top: 105px; }
+    #choiceTrade { left: 682px; top: 124px; }
+
+    @media (max-width: 1120px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      .controls {
+        max-width: 794px;
+        width: 100%;
+        margin: 0 auto;
+      }
+    }
+
+    @media (max-width: 840px) {
+      .preview {
+        overflow-x: auto;
+      }
+
+      .sheet {
+        margin: 0;
+      }
+    }
+
+    @media print {
+      body {
+        background: #fff;
+      }
+
+      .controls {
+        display: none;
+      }
+
+      .app {
+        display: block;
+        max-width: none;
+        padding: 0;
+      }
+
+      .preview {
+        overflow: visible;
+        padding: 0;
+      }
+
+      .sheet {
+        width: 210mm;
+        height: 297mm;
+        margin: 0;
+        box-shadow: none;
+      }
+
+      .cover-bg {
+        display: block;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+      }
+
+      .cover-field {
+        background: transparent;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+      }
+
+      @page {
+        size: A4;
+        margin: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="controls">
+      <h1>MM HIEWA File Cover</h1>
+      <p class="hint">Fill here, or click directly on the PDF cover boxes. Use Print / PDF to save the filled cover.</p>
+
+      <div class="field">
+        <label for="choice">Please tick either one</label>
+        <select id="choice" data-linked="choice">
+          <option value="">None</option>
+          <option value="first">First Time Buy TOYOTA</option>
+          <option value="additional">Buy for ADDITIONAL</option>
+          <option value="trade">Trade In (REPLACEMENT)</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="controlFromWhere">From Where</label>
+        <input id="controlFromWhere" data-linked="fromWhere" type="text" autocomplete="off">
+      </div>
+
+      <div class="field">
+        <label for="controlDate">Date</label>
+        <input id="controlDate" data-linked="date" type="text" autocomplete="off" placeholder="dd/mm/yyyy">
+      </div>
+
+      <div class="field">
+        <label for="controlBrokerName">Broker Name</label>
+        <input id="controlBrokerName" data-linked="brokerName" type="text" autocomplete="off">
+      </div>
+
+      <div class="field">
+        <label for="controlRcoNo">RCO No</label>
+        <input id="controlRcoNo" data-linked="rcoNo" type="text" autocomplete="off">
+      </div>
+
+      <div class="field">
+        <label for="controlCustomerName">Customer Name</label>
+        <input id="controlCustomerName" data-linked="customerName" type="text" autocomplete="off">
+      </div>
+
+      <div class="field">
+        <label for="controlIcNo">IC No / BR No</label>
+        <input id="controlIcNo" data-linked="icNo" type="text" autocomplete="off">
+      </div>
+
+      <div class="field">
+        <label for="controlModelVehicle">Model Vehicle</label>
+        <input id="controlModelVehicle" data-linked="modelVehicle" type="text" autocomplete="off">
+      </div>
+
+      <div class="field">
+        <label for="controlColour">Colour</label>
+        <input id="controlColour" data-linked="colour" type="text" autocomplete="off">
+      </div>
+
+      <div class="field">
+        <label for="controlAccessories">Accessories</label>
+        <input id="controlAccessories" data-linked="accessories" type="text" autocomplete="off">
+      </div>
+
+      <div class="field">
+        <label for="controlTradeIn">Trade In</label>
+        <input id="controlTradeIn" data-linked="tradeIn" type="text" autocomplete="off">
+      </div>
+
+      <div class="actions">
+        <button type="button" id="todayBtn" class="secondary">Today</button>
+        <button type="button" id="printBtn">Print / PDF</button>
+        <button type="button" id="clearBtn" class="danger">Clear</button>
+        <button type="button" id="sampleBtn" class="secondary">Sample</button>
+      </div>
+    </section>
+
+    <section class="preview" aria-label="MM HIEWA cover preview">
+      <article class="sheet">
+        <img class="cover-bg" src="mm_hiewa_cover_background.png" alt="">
+        <input id="fromWhere" class="cover-field" data-linked="fromWhere" type="text" autocomplete="off">
+        <input id="date" class="cover-field" data-linked="date" type="text" autocomplete="off">
+        <input id="brokerName" class="cover-field" data-linked="brokerName" type="text" autocomplete="off">
+        <input id="rcoNo" class="cover-field" data-linked="rcoNo" type="text" autocomplete="off">
+        <input id="customerName" class="cover-field" data-linked="customerName" type="text" autocomplete="off">
+        <input id="icNo" class="cover-field" data-linked="icNo" type="text" autocomplete="off">
+        <input id="modelVehicle" class="cover-field" data-linked="modelVehicle" type="text" autocomplete="off">
+        <input id="colour" class="cover-field" data-linked="colour" type="text" autocomplete="off">
+        <input id="accessories" class="cover-field" data-linked="accessories" type="text" autocomplete="off">
+        <input id="tradeIn" class="cover-field" data-linked="tradeIn" type="text" autocomplete="off">
+
+        <div id="choiceFirst" class="tick"></div>
+        <div id="choiceAdditional" class="tick"></div>
+        <div id="choiceTrade" class="tick"></div>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    const storageKey = "mm-hiewa-pdf-cover-generator";
+    const links = [
+      "fromWhere",
+      "date",
+      "brokerName",
+      "rcoNo",
+      "customerName",
+      "icNo",
+      "modelVehicle",
+      "colour",
+      "accessories",
+      "tradeIn"
+    ];
+
+    function controlsFor(key) {
+      return Array.from(document.querySelectorAll(`[data-linked="${key}"]`));
+    }
+
+    function syncValue(key, value) {
+      controlsFor(key).forEach((control) => {
+        if (control.value !== value) control.value = value;
+      });
+      save();
+    }
+
+    function updateChoice(value) {
+      document.getElementById("choiceFirst").textContent = value === "first" ? "√" : "";
+      document.getElementById("choiceAdditional").textContent = value === "additional" ? "√" : "";
+      document.getElementById("choiceTrade").textContent = value === "trade" ? "√" : "";
+      save();
+    }
+
+    function todayText() {
+      const now = new Date();
+      const day = String(now.getDate()).padStart(2, "0");
+      const month = String(now.getMonth() + 1).padStart(2, "0");
+      return `${day}/${month}/${now.getFullYear()}`;
+    }
+
+    function getData() {
+      const data = { choice: document.getElementById("choice").value };
+      links.forEach((key) => {
+        data[key] = document.getElementById(key).value;
+      });
+      return data;
+    }
+
+    function save() {
+      localStorage.setItem(storageKey, JSON.stringify(getData()));
+    }
+
+    function clearForm() {
+      document.getElementById("choice").value = "";
+      links.forEach((key) => syncValue(key, ""));
+      updateChoice("");
+      localStorage.removeItem(storageKey);
+    }
+
+    function loadSample() {
+      const sample = {
+        choice: "first",
+        fromWhere: "Kuala Lumpur",
+        date: todayText(),
+        brokerName: "Tan Broker",
+        rcoNo: "RCO-001",
+        customerName: "Customer Name",
+        icNo: "900101-10-1234",
+        modelVehicle: "Toyota Vios",
+        colour: "White",
+        accessories: "Tinted Film / Car Mat",
+        tradeIn: "Perodua Myvi 2018"
+      };
+
+      document.getElementById("choice").value = sample.choice;
+      updateChoice(sample.choice);
+      links.forEach((key) => syncValue(key, sample[key] || ""));
+    }
+
+    function loadSaved() {
+      const saved = JSON.parse(localStorage.getItem(storageKey) || "{}");
+      document.getElementById("choice").value = saved.choice || "";
+      updateChoice(saved.choice || "");
+      links.forEach((key) => syncValue(key, saved[key] || ""));
+    }
+
+    links.forEach((key) => {
+      controlsFor(key).forEach((control) => {
+        control.addEventListener("input", () => syncValue(key, control.value));
+      });
+    });
+
+    document.getElementById("choice").addEventListener("change", (event) => {
+      updateChoice(event.target.value);
+    });
+    document.getElementById("todayBtn").addEventListener("click", () => syncValue("date", todayText()));
+    document.getElementById("printBtn").addEventListener("click", () => window.print());
+    document.getElementById("clearBtn").addEventListener("click", clearForm);
+    document.getElementById("sampleBtn").addEventListener("click", loadSample);
+
+    loadSaved();
+  </script>
+</body>
+</html>
